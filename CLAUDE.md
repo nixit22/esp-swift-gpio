@@ -33,7 +33,7 @@ try gpio.removeIsrHandler()
 
 ## Non-obvious patterns
 
-**`gpio_config_t` initializer** — `gpio.h` provides `gpio_config_create()` with `__attribute__((swift_name(...)))` to work around `gpio_hys_ctrl_mode_t` being absent on some SoCs. The C wrapper conditionally defines the type and `GPIO_HYS_SOFT_DISABLE` so `GPIO.swift` can always use the same struct initializer.
+**`gpio_config_t` initializer** — `gpio.h` provides `gpio_config_create()` with `SWIFT_NAME(...)` (from `esp-swift-support`) to work around `gpio_hys_ctrl_mode_t` being absent on some SoCs. The C wrapper conditionally defines the type and `GPIO_HYS_SOFT_DISABLE` so `GPIO.swift` can always use the same struct initializer.
 
 **`@_exported import ESP_GPIO`** — re-exports the C module to callers of `SwiftGPIO`, so consumers get `gpio_num_t`, `GPIO_NUM_*`, `GPIO_MODE_*` etc. without importing `ESP_GPIO` separately.
 
