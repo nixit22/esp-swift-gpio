@@ -25,11 +25,13 @@ try gpio.setInput(pullUp: GPIO_PULLUP_ENABLE, intr: GPIO_INTR_POSEDGE)
 try gpio.reset()
 ```
 
-ISR support (internal access level — wired up via `SwiftPlatform.IsrHandler`):
+ISR support (wired up via `SwiftPlatform.IsrHandler`):
 ```swift
 try gpio.setIsrHandler(handler)   // installs IsrHandler on this pin
 try gpio.removeIsrHandler()
 ```
+Caller must install the GPIO ISR service once per process (`gpio_install_isr_service`) before
+adding any pin handler — reachable directly since `ESP_GPIO` is `@_exported`, no wrapper needed.
 
 ## Non-obvious patterns
 
@@ -37,4 +39,4 @@ try gpio.removeIsrHandler()
 
 **`@_exported import ESP_GPIO`** — re-exports the C module to callers of `SwiftGPIO`, so consumers get `gpio_num_t`, `GPIO_NUM_*`, `GPIO_MODE_*` etc. without importing `ESP_GPIO` separately.
 
-**`setIsrHandler` / `removeIsrHandler` are `internal`**, not `public`. Callers must install the GPIO ISR service (`gpio_install_isr_service`) themselves before adding pin handlers.
+**`setIsrHandler` / `removeIsrHandler` install/remove a handler for one already-configured pin only** — they don't touch the ISR service itself (a single process-wide `gpio_install_isr_service` call, made once by the app, not per-pin/per-component).

@@ -101,10 +101,14 @@ public struct Gpio {
 
     /// Adds an ISR handler for this GPIO pin.
     ///
+    /// The GPIO ISR service must be installed once per process (`gpio_install_isr_service`,
+    /// available directly via this module's re-exported `ESP_GPIO` C import) before calling
+    /// this — not done here, since it's a one-time process-wide call, not a per-pin one.
+    ///
     /// - Parameter handler: The ISR handler to add.
     ///
     /// - Throws: `Error` if adding the ISR handler fails.
-    func setIsrHandler(_ handler: borrowing IsrHandler) throws(Error) {
+    public func setIsrHandler(_ handler: borrowing IsrHandler) throws(Error) {
         try gpio_isr_handler_add(gpioNum, handler.handler, handler.args)
             .throwEspError()
     }
@@ -112,7 +116,7 @@ public struct Gpio {
     /// Removes the ISR handler for this GPIO pin.
     ///
     /// - Throws: `Error` if removing the ISR handler fails.
-    func removeIsrHandler() throws(Error) {
+    public func removeIsrHandler() throws(Error) {
         try gpio_isr_handler_remove(gpioNum)
             .throwEspError()
     }
