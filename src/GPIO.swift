@@ -37,8 +37,8 @@ public struct Gpio {
 
     /// Configure the GPIO as an output pin.
     ///
-    /// - Throws: `Error` if the GPIO configuration fails.
-    public func setOutput() throws(Error) {
+    /// - Throws: `PlatformError` if the GPIO configuration fails.
+    public func setOutput() throws(PlatformError) {
         var cfg = gpio_config_t(
             pin_bit_mask: 1 << UInt64(gpioNum.rawValue),
             mode: GPIO_MODE_OUTPUT,
@@ -57,12 +57,12 @@ public struct Gpio {
     ///   - pulldown: pull-down configuration (default: `GPIO_PULLDOWN_DISABLE`).
     ///   - intr: interrupt type (default: `GPIO_INTR_DISABLE`).
     ///
-    /// - Throws: `Error` if the GPIO configuration fails.
+    /// - Throws: `PlatformError` if the GPIO configuration fails.
     public func setInput(
         pullUp: gpio_pullup_t = GPIO_PULLUP_DISABLE,
         pulldown: gpio_pulldown_t = GPIO_PULLDOWN_DISABLE,
         intr: gpio_int_type_t = GPIO_INTR_DISABLE
-    ) throws(Error) {
+    ) throws(PlatformError) {
         var cfg = gpio_config_t(
             pin_bit_mask: 1 << UInt64(gpioNum.rawValue),
             mode: GPIO_MODE_INPUT,
@@ -76,8 +76,8 @@ public struct Gpio {
 
     /// Resets the GPIO pin to its default state.
     ///
-    /// - Throws: `Error` if the reset operation fails.
-    public func reset() throws(Error) {
+    /// - Throws: `PlatformError` if the reset operation fails.
+    public func reset() throws(PlatformError) {
         try gpio_reset_pin(gpioNum)
             .throwEspError()
     }
@@ -93,8 +93,8 @@ public struct Gpio {
     ///
     /// - Parameter level: `true` to drive the pin high, `false` to drive it low.
     ///
-    /// - Throws: `Error` if setting the level fails.
-    public func set(level: Bool) throws(Error) {
+    /// - Throws: `PlatformError` if setting the level fails.
+    public func set(level: Bool) throws(PlatformError) {
         try gpio_set_level(gpioNum, level ? 1 : 0)
             .throwEspError()
     }
@@ -107,16 +107,16 @@ public struct Gpio {
     ///
     /// - Parameter handler: The ISR handler to add.
     ///
-    /// - Throws: `Error` if adding the ISR handler fails.
-    public func setIsrHandler(_ handler: borrowing IsrHandler) throws(Error) {
+    /// - Throws: `PlatformError` if adding the ISR handler fails.
+    public func setIsrHandler(_ handler: borrowing IsrHandler) throws(PlatformError) {
         try gpio_isr_handler_add(gpioNum, handler.handler, handler.args)
             .throwEspError()
     }
 
     /// Removes the ISR handler for this GPIO pin.
     ///
-    /// - Throws: `Error` if removing the ISR handler fails.
-    public func removeIsrHandler() throws(Error) {
+    /// - Throws: `PlatformError` if removing the ISR handler fails.
+    public func removeIsrHandler() throws(PlatformError) {
         try gpio_isr_handler_remove(gpioNum)
             .throwEspError()
     }
