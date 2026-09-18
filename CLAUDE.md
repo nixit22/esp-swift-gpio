@@ -27,11 +27,24 @@ try gpio.reset()
 
 ISR support (wired up via `SwiftPlatform.IsrHandler`):
 ```swift
+try Gpio.installIsrService()      // once per process, before any setIsrHandler call
 try gpio.setIsrHandler(handler)   // installs IsrHandler on this pin
 try gpio.removeIsrHandler()
+Gpio.uninstallIsrService()        // once per process
 ```
-Caller must install the GPIO ISR service once per process (`gpio_install_isr_service`) before
-adding any pin handler — reachable directly since `ESP_GPIO` is `@_exported`, no wrapper needed.
+`installIsrService`/`uninstallIsrService` are `static` — process-wide, not tied to a pin.
+`setIsrHandler` (`gpio_isr_handler_add`) fails with `ESP_ERR_INVALID_STATE` if the service isn't
+installed yet, so ordering matters.
+
+Sleep wakeup support:
+```swift
+try gpio.enableWakeup(intrType: GPIO_INTR_LOW_LEVEL)   // level-triggered only, active pin
+try gpio.disableWakeup()
+```
+This only arms the pin itself. The sleep subsystem as a whole still needs
+`esp_sleep_enable_gpio_wakeup()` (light sleep) called once by the app — not wrapped here, it's
+not a per-pin call and lives outside `esp_driver_gpio`; reachable directly the same
+`@_exported`-`ESP_GPIO` way as `gpio_install_isr_service` above.
 
 ## Non-obvious patterns
 
@@ -39,4 +52,4 @@ adding any pin handler — reachable directly since `ESP_GPIO` is `@_exported`, 
 
 **`@_exported import ESP_GPIO`** — re-exports the C module to callers of `SwiftGPIO`, so consumers get `gpio_num_t`, `GPIO_NUM_*`, `GPIO_MODE_*` etc. without importing `ESP_GPIO` separately.
 
-**`setIsrHandler` / `removeIsrHandler` install/remove a handler for one already-configured pin only** — they don't touch the ISR service itself (a single process-wide `gpio_install_isr_service` call, made once by the app, not per-pin/per-component).
+**`setIsrHandler` / `removeIsrHandler` install/remove a handler for one already-configured pin only** — they don't touch the ISR service itself; that's `Gpio.installIsrService()` / `Gpio.uninstallIsrService()`, called once by the app, not per-pin/per-component.

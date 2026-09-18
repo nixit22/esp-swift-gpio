@@ -99,11 +99,33 @@ public struct Gpio {
             .throwEspError()
     }
 
+    /// Installs the GPIO ISR service for the current process.
+    ///
+    /// Process-wide, not per-pin — call this exactly once before the first `setIsrHandler` call
+    /// on any pin. `gpio_isr_handler_add` (used by `setIsrHandler`) fails with
+    /// `ESP_ERR_INVALID_STATE` if the service isn't installed yet, so this must run first.
+    ///
+    /// - Parameter intrAllocFlags: flags for `esp_intr_alloc` (e.g. `ESP_INTR_FLAG_LEVEL1`,
+    ///   `ESP_INTR_FLAG_IRAM`). Pass `0` for default behavior.
+    ///
+    /// - Throws: `PlatformError` if installing the service fails.
+    public static func installIsrService(intrAllocFlags: Int32 = 0) throws(PlatformError) {
+        try gpio_install_isr_service(intrAllocFlags)
+            .throwEspError()
+    }
+
+    /// Uninstalls the GPIO ISR service for the current process, freeing its resources.
+    ///
+    /// Process-wide, not per-pin. Removes any pin handlers still installed.
+    public static func uninstallIsrService() {
+        gpio_uninstall_isr_service()
+    }
+
     /// Adds an ISR handler for this GPIO pin.
     ///
-    /// The GPIO ISR service must be installed once per process (`gpio_install_isr_service`,
-    /// available directly via this module's re-exported `ESP_GPIO` C import) before calling
-    /// this — not done here, since it's a one-time process-wide call, not a per-pin one.
+    /// The GPIO ISR service must be installed once per process (`Gpio.installIsrService()`)
+    /// before calling this — not done here, since it's a one-time process-wide call, not a
+    /// per-pin one.
     ///
     /// - Parameter handler: The ISR handler to add.
     ///
@@ -118,6 +140,29 @@ public struct Gpio {
     /// - Throws: `PlatformError` if removing the ISR handler fails.
     public func removeIsrHandler() throws(PlatformError) {
         try gpio_isr_handler_remove(gpioNum)
+            .throwEspError()
+    }
+
+    /// Enables this GPIO as a wakeup source for light/deep sleep.
+    ///
+    /// Light-sleep GPIO wakeup only supports level-triggered types (`GPIO_INTR_LOW_LEVEL` /
+    /// `GPIO_INTR_HIGH_LEVEL`), not edge — unlike the `intr` passed to `setInput(intr:)` for a
+    /// regular ISR. Caller must still call `esp_sleep_enable_gpio_wakeup()` separately to arm
+    /// GPIO as a wakeup source for the sleep subsystem as a whole.
+    ///
+    /// - Parameter intrType: level trigger to wake on.
+    ///
+    /// - Throws: `PlatformError` if enabling the wakeup source fails.
+    public func enableWakeup(intrType: gpio_int_type_t) throws(PlatformError) {
+        try gpio_wakeup_enable(gpioNum, intrType)
+            .throwEspError()
+    }
+
+    /// Disables this GPIO as a wakeup source.
+    ///
+    /// - Throws: `PlatformError` if disabling the wakeup source fails.
+    public func disableWakeup() throws(PlatformError) {
+        try gpio_wakeup_disable(gpioNum)
             .throwEspError()
     }
 }
