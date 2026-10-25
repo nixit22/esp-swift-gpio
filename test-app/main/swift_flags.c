@@ -20,25 +20,5 @@
  * SOFTWARE.
  */
 
-#include "gpio.h"
-
-gpio_config_t gpio_config_create(
-    uint64_t pin_bit_mask,
-    gpio_mode_t mode,
-    gpio_pullup_t pull_up_en,
-    gpio_pulldown_t pull_down_en,
-    gpio_int_type_t intr_type,
-    gpio_hys_ctrl_mode_t hys_ctrl_mode
-) {
-    gpio_config_t config = {
-        .pin_bit_mask = pin_bit_mask,
-        .mode = mode,
-        .pull_up_en = pull_up_en,
-        .pull_down_en = pull_down_en,
-        .intr_type = intr_type,
-#if SOC_GPIO_SUPPORT_PIN_HYS_FILTER
-        .hys_ctrl_mode = hys_ctrl_mode  // Only set if field exists
-#endif
-    };
-    return config;
-}
+// Empty: ESP-IDF compiles it with the C flags of the main component, which
+// swift_package() gives to SwiftPM (esp-swift-support/cmake/swift_build.py).

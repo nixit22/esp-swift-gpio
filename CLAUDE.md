@@ -8,9 +8,9 @@ Depends on: `SwiftPlatform`, `SwiftSupport`, `esp_driver_gpio`
 
 | File | Role |
 |---|---|
-| `src/GPIO.swift` | `Gpio` struct — the public Swift API |
-| `src/gpio.c` / `src/gpio.h` | C glue for SOC-conditional types |
-| `module.modulemap` | Clang module `ESP_GPIO` — umbrella over `src/gpio.h` |
+| `Sources/GPIO/GPIO.swift` | `Gpio` struct — the public Swift API |
+| `Sources/ESP_GPIO/gpio.c` / `include/ESP_GPIO.h` | C glue for SOC-conditional types |
+| `Package.swift` | SwiftPM package: C target `ESP_GPIO` (module map generated from `include/ESP_GPIO.h`) and Swift target `GPIO` |
 
 ## Public API
 
@@ -48,7 +48,7 @@ not a per-pin call and lives outside `esp_driver_gpio`; reachable directly the s
 
 ## Non-obvious patterns
 
-**`gpio_config_t` initializer** — `gpio.h` provides `gpio_config_create()` with `SWIFT_NAME(...)` (from `esp-swift-support`) to work around `gpio_hys_ctrl_mode_t` being absent on some SoCs. The C wrapper conditionally defines the type and `GPIO_HYS_SOFT_DISABLE` so `GPIO.swift` can always use the same struct initializer.
+**`gpio_config_t` initializer** — `ESP_GPIO.h` provides `gpio_config_create()` with `SWIFT_NAME(...)` (from `esp-swift-support`) to work around `gpio_hys_ctrl_mode_t` being absent on some SoCs. The C wrapper conditionally defines the type and `GPIO_HYS_SOFT_DISABLE` so `GPIO.swift` can always use the same struct initializer.
 
 **`@_exported import ESP_GPIO`** — re-exports the C module to callers of `SwiftGPIO`, so consumers get `gpio_num_t`, `GPIO_NUM_*`, `GPIO_MODE_*` etc. without importing `ESP_GPIO` separately.
 
