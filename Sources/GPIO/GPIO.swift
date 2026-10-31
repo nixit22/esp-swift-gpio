@@ -149,6 +149,31 @@ public struct Gpio {
             .throwEspError()
     }
 
+    /// Enables the interrupt of this GPIO pin, after clearing its pending status.
+    ///
+    /// Not ISR-safe: `gpio_intr_enable` is never placed in IRAM, not even with
+    /// `CONFIG_GPIO_CTRL_FUNC_IN_IRAM`. Call it from a task.
+    ///
+    /// - Throws: `PlatformError` if enabling the interrupt fails.
+    public func intrEnable() throws(PlatformError) {
+        try gpio_intr_enable(gpioNum)
+            .throwEspError()
+    }
+
+    /// Disables the interrupt of this GPIO pin, and clears its pending status.
+    ///
+    /// ISR-safe when `CONFIG_GPIO_CTRL_FUNC_IN_IRAM` is set: ESP-IDF then places
+    /// `gpio_intr_disable` in IRAM, and this wrapper goes to IRAM with it. Without that option the
+    /// C function is in flash, so don't call this from an ISR that runs with `ESP_INTR_FLAG_IRAM`.
+    ///
+    /// Doesn't throw: the only failure of `gpio_intr_disable` is an invalid pin number.
+    #if CONFIG_GPIO_CTRL_FUNC_IN_IRAM
+    @section(".iram1.Gpio-intrDisable")
+    #endif
+    public func intrDisable() {
+        _ = gpio_intr_disable(gpioNum)
+    }
+
     /// Enables this GPIO as a wakeup source for light/deep sleep.
     ///
     /// Light-sleep GPIO wakeup only supports level-triggered types (`GPIO_INTR_LOW_LEVEL` /
