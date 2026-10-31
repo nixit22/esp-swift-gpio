@@ -121,17 +121,23 @@ public struct Gpio {
         gpio_uninstall_isr_service()
     }
 
-    /// Adds an ISR handler for this GPIO pin.
+    /// Adds a raw C-convention ISR handler for this GPIO pin.
     ///
-    /// The GPIO ISR service must be installed once per process (`Gpio.installIsrService()`)
-    /// before calling this — not done here, since it's a one-time process-wide call, not a
-    /// per-pin one.
+    /// `handler` is called with a `nil` argument. It runs in interrupt context, so it must not
+    /// capture anything.
+    ///
+    /// The handler can be placed in IRAM (e.g. `@section(".iram1.<name>")`). This is required
+    /// if `ESP_INTR_FLAG_IRAM` was passed to `Gpio.installIsrService(intrAllocFlags:)`: the
+    /// handler then also runs while flash cache is disabled, so it, and everything it calls,
+    /// must not touch flash.
+    ///
+    /// The GPIO ISR service must already be installed (`Gpio.installIsrService()`).
     ///
     /// - Parameter handler: The ISR handler to add.
     ///
     /// - Throws: `PlatformError` if adding the ISR handler fails.
-    public func setIsrHandler(_ handler: borrowing IsrHandler) throws(PlatformError) {
-        try gpio_isr_handler_add(gpioNum, handler.handler, handler.args)
+    public func setIsrHandler(_ handler: gpio_isr_t) throws(PlatformError) {
+        try gpio_isr_handler_add(gpioNum, handler, nil)
             .throwEspError()
     }
 

@@ -25,10 +25,10 @@ try gpio.setInput(pullUp: GPIO_PULLUP_ENABLE, intr: GPIO_INTR_POSEDGE)
 try gpio.reset()
 ```
 
-ISR support (wired up via `SwiftPlatform.IsrHandler`):
+ISR support (raw C-convention handler, no closure/context):
 ```swift
 try Gpio.installIsrService()      // once per process, before any setIsrHandler call
-try gpio.setIsrHandler(handler)   // installs IsrHandler on this pin
+try gpio.setIsrHandler(handler)   // handler: gpio_isr_t, e.g. an `@section(".iram1.x") @c` func; called with nil arg
 try gpio.removeIsrHandler()
 Gpio.uninstallIsrService()        // once per process
 ```
