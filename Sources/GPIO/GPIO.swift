@@ -137,7 +137,23 @@ public struct Gpio {
     ///
     /// - Throws: `PlatformError` if adding the ISR handler fails.
     public func setIsrHandler(_ handler: gpio_isr_t) throws(PlatformError) {
-        try gpio_isr_handler_add(gpioNum, handler, nil)
+        try setIsrHandler(handler, arg: nil)
+    }
+
+    /// Adds a raw C-convention ISR handler for this GPIO pin, called with `arg`.
+    ///
+    /// Same as `setIsrHandler(_:)`, but the handler receives `arg` instead of `nil`, so it can
+    /// reach its state without globals. `arg` must stay valid for as long as the handler is
+    /// installed, and the handler must not retain or release it (no ARC traffic in interrupt
+    /// context; use `Unmanaged._withUnsafeGuaranteedRef` for class instances).
+    ///
+    /// - Parameters:
+    ///   - handler: The ISR handler to add.
+    ///   - arg: The argument passed to `handler`.
+    ///
+    /// - Throws: `PlatformError` if adding the ISR handler fails.
+    public func setIsrHandler(_ handler: gpio_isr_t, arg: UnsafeMutableRawPointer?) throws(PlatformError) {
+        try gpio_isr_handler_add(gpioNum, handler, arg)
             .throwEspError()
     }
 
@@ -194,6 +210,28 @@ public struct Gpio {
     /// - Throws: `PlatformError` if disabling the wakeup source fails.
     public func disableWakeup() throws(PlatformError) {
         try gpio_wakeup_disable(gpioNum)
+            .throwEspError()
+    }
+
+    /// Makes this pin keep its normal configuration (direction, pull, output level) during light
+    /// sleep, instead of the separate sleep-mode configuration.
+    ///
+    /// Needed for an output that must stay driven while the chip sleeps (e.g. a status LED). With
+    /// `CONFIG_PM_SLP_DISABLE_GPIO`, ESP-IDF isolates every pin in light sleep, leaving it floating,
+    /// except wakeup sources (`enableWakeup(intrType:)` already exempts a pin). Call this after the
+    /// pin is configured as an output. Light sleep only; for deep sleep use `gpio_hold_en`.
+    ///
+    /// - Throws: `PlatformError` if the pin number is invalid.
+    public func disableSleepSelect() throws(PlatformError) {
+        try gpio_sleep_sel_dis(gpioNum)
+            .throwEspError()
+    }
+
+    /// Makes this pin use the sleep-mode configuration during light sleep again (the default).
+    ///
+    /// - Throws: `PlatformError` if the pin number is invalid.
+    public func enableSleepSelect() throws(PlatformError) {
+        try gpio_sleep_sel_en(gpioNum)
             .throwEspError()
     }
 }
